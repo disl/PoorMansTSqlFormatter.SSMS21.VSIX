@@ -90,6 +90,7 @@
       <Button guid="guidFormatSqlCommandPackageCmdSet" id="FormatSqlCommandId" priority="0x0100" type="Button">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
+        <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Format Selection</ButtonText>
         </Strings>
@@ -97,6 +98,7 @@
       <Button guid="guidFormatSqlCommandPackageCmdSet" id="FormatWholeDocumentCommandId" priority="0x0101" type="Button">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic2" />
+        <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Format Whole Document</ButtonText>
         </Strings>
@@ -104,6 +106,7 @@
       <Button guid="guidFormatSqlCommandPackageCmdSet" id="FormattingSettingsCommandId" priority="0x0102" type="Button">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic3" />
+        <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Formatting Settings…</ButtonText>
         </Strings>
@@ -112,6 +115,7 @@
       <Button guid="guidFormatSqlCommandPackageCmdSet" id="ExportToExcelCommandId" priority="0x0103" type="Button">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic4" />
+        <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Export to Excel</ButtonText>
         </Strings>

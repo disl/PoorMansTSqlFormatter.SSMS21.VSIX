@@ -6,8 +6,8 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
     /// <summary>
     /// Zentrale Laufzeit-Lokalisierung: deutsches SSMS bekommt deutsche Texte, alle
     /// anderen Systeme englische. Die .vsct-Defaults sind Englisch; auf deutschen
-    /// Systemen werden Toolbar-/Menue-Buttons zur Laufzeit per CommandBars
-    /// umbeschriftet (siehe <see cref="FormatSqlCommand.ApplyLocalizedCaptions"/>).
+    /// Systemen setzen die QueryStatus-Handler den Text am Kommando (siehe
+    /// <see cref="CommandText"/>, Flag TextChanges im .vsct).
     /// </summary>
     internal static class Localizer
     {
@@ -19,17 +19,20 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         public static string T(string german, string english) => IsGerman ? german : english;
 
         /// <summary>
-        /// Mapping der .vsct-Buttontexte (englische Defaults) auf die deutschen
-        /// Bezeichnungen. Wird bei deutschem SSMS per CommandBars-Caption angewendet.
+        /// Beschriftung eines Kommandos (Command-ID aus dem .vsct) in der Systemsprache.
+        /// Wird in den QueryStatus-Handlern als OleMenuCommand.Text gesetzt.
         /// </summary>
-        public static readonly Dictionary<string, string> GermanCommandCaptions =
-            new Dictionary<string, string>
+        public static string CommandText(int commandId)
+        {
+            switch (commandId)
             {
-                { "Format Selection", "Auswahl formatieren" },
-                { "Format Whole Document", "Ganzes Dokument formatieren" },
-                { "Formatting Settings…", "Formatierungseinstellungen…" },
-                { "Export to Excel", "Export in Excel" },
-            };
+                case FormatSqlCommand.FormatSelectionCommandId: return T("Auswahl formatieren", "Format Selection");
+                case FormatSqlCommand.FormatWholeDocumentCommandId: return T("Ganzes Dokument formatieren", "Format Whole Document");
+                case FormatSqlCommand.FormattingSettingsCommandId: return T("Formatierungseinstellungen…", "Formatting Settings…");
+                case FormatSqlCommand.ExportToExcelCommandId: return T("Export in Excel", "Export to Excel");
+                default: return null;
+            }
+        }
 
         // --- Excel-Export ---
 

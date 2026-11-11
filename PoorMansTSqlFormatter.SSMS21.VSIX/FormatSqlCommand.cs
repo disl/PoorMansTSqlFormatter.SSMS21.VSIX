@@ -60,7 +60,6 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
             var command = new FormatSqlCommand(package, commandService);
             command.EnsureKeyBindings();
             command.ShowToolbar();
-            command.ApplyLocalizedCaptions();
         }
 
         /// <summary>
@@ -237,7 +236,7 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         private void QueryStatusWritableDocument(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ApplyLocalizedCaptions();
+            ApplyLocalizedText(sender);
             if (sender is OleMenuCommand command)
             {
                 var dte = (DTE2)Package.GetGlobalService(typeof(DTE));
@@ -252,7 +251,7 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         private void QueryStatusAnyDocument(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ApplyLocalizedCaptions();
+            ApplyLocalizedText(sender);
             if (sender is OleMenuCommand command)
             {
                 var dte = (DTE2)Package.GetGlobalService(typeof(DTE));
@@ -273,91 +272,26 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         private void QueryStatusLocalizeOnly(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ApplyLocalizedCaptions();
+            ApplyLocalizedText(sender);
         }
 
         /// <summary>
-        /// Beschriftet die Kommando-Buttons in Toolbar und Menue zur Laufzeit um, wenn das
-        /// SSMS deutsch ist (die .vsct-Defaults sind englisch). Fuer jeden CommandBarButton
-        /// wird die englische Caption auf die deutsche gemappt; Popups (Untermenues) werden
-        /// rekursiv mitlaufen. CommandBars wird wie in <see cref="ShowToolbar"/> per
-        /// Late-Binding angesprochen (leere Facade-Assembly in SSMS 22). Idempotent: Nach dem
-        /// ersten Umbeschriften sind die Captions deutsch und kein erneuter Pass aendert etwas.
+        /// Setzt die lokalisierte Beschriftung (deutsches SSMS) direkt am Kommando. Wirkt in
+        /// Menue und Toolbar-Tooltip, weil die Buttons im .vsct das Flag TextChanges tragen.
+        ///
+        /// 11.11.26 ds: Ersetzt die fruehere Umbeschriftung ueber DTE.CommandBars
+        /// (ApplyLocalizedCaptions/RelabelBar/RelabelControl). Die lief bei JEDER Statusabfrage
+        /// rekursiv durch alle Menues ohne Zyklus-Erkennung; SSMS 22.12 hat einen zyklischen
+        /// Menueeintrag (Erstellen &gt; Build enthaelt sich selbst) -> Endlosrekursion ->
+        /// StackOverflow (0xC00000FD) -> SSMS-Absturz kurz nach dem Formatieren.
         /// </summary>
-        private void ApplyLocalizedCaptions()
+        private static void ApplyLocalizedText(object sender)
         {
-            if (!Localizer.IsGerman) return; // englische Defaults sind dann korrekt
-            ThreadHelper.ThrowIfNotOnUIThread();
-            try
+            if (sender is OleMenuCommand command)
             {
-                var dte = (DTE2)Package.GetGlobalService(typeof(DTE));
-                if (dte == null) return;
-                object commandBars = dte.CommandBars;
-                if (commandBars == null) return;
-
-                int barCount = (int)commandBars.GetType().InvokeMember(
-                    "Count", System.Reflection.BindingFlags.GetProperty, null, commandBars, null);
-                for (int i = 1; i <= barCount; i++)
-                {
-                    object bar = commandBars.GetType().InvokeMember(
-                        "Item", System.Reflection.BindingFlags.GetProperty, null, commandBars,
-                        new object[] { i });
-                    if (bar != null) RelabelBar(bar);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log("ApplyLocalizedCaptions Fehler: " + ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Laeuft die Controls einer CommandBar durch und relabelt Buttons/Popups.
-        /// </summary>
-        private static void RelabelBar(object bar)
-        {
-            if (bar == null) return;
-            object controls = bar.GetType().InvokeMember(
-                "Controls", System.Reflection.BindingFlags.GetProperty, null, bar, null);
-            if (controls == null) return;
-            int ctlCount = (int)controls.GetType().InvokeMember(
-                "Count", System.Reflection.BindingFlags.GetProperty, null, controls, null);
-            for (int j = 1; j <= ctlCount; j++)
-            {
-                object ctl = controls.GetType().InvokeMember(
-                    "Item", System.Reflection.BindingFlags.GetProperty, null, controls,
-                    new object[] { j });
-                if (ctl != null) RelabelControl(ctl);
-            }
-        }
-
-        /// <summary>
-        /// Map Caption eines CommandBarButton auf die deutsche Bezeichnung; bei einem
-        /// Popup (Untermenue) rekursiv weitergehen.
-        /// </summary>
-        private static void RelabelControl(object ctl)
-        {
-            try
-            {
-                string caption = (string)ctl.GetType().InvokeMember(
-                    "Caption", System.Reflection.BindingFlags.GetProperty, null, ctl, null);
-                if (caption != null &&
-                    Localizer.GermanCommandCaptions.TryGetValue(caption, out string german))
-                {
-                    ctl.GetType().InvokeMember(
-                        "Caption", System.Reflection.BindingFlags.SetProperty, null, ctl,
-                        new object[] { german });
-                }
-
-                // Bei Popups (z.B. das Untermenue unter "Tools") in die verschachtelte
-                // CommandBar absteigen und deren Buttons ebenfalls relabeln.
-                object subBar = ctl.GetType().InvokeMember(
-                    "CommandBar", System.Reflection.BindingFlags.GetProperty, null, ctl, null);
-                if (subBar != null) RelabelBar(subBar);
-            }
-            catch
-            {
-                // Kein CommandBarButton/Popup (z.B. Separator, ComboBox) -> ueberspringen.
+                string text = Localizer.CommandText(command.CommandID.ID);
+                if (text != null && command.Text != text)
+                    command.Text = text;
             }
         }
 
