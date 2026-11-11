@@ -2,7 +2,7 @@
 
 A Visual Studio extension (VSIX) that integrates the [Poor Man's T-SQL Formatter](https://github.com/TaoK/PoorMansTSqlFormatter) into **SQL Server Management Studio 22** (VS 2026 shell).
 
-It reformats T-SQL code cleanly and **preserves comments** (`--` and `/* */`).
+It reformats T-SQL code cleanly and **preserves comments** (`--` and `/* */`), and exports query results to Excel **with correct data types** (numbers stay numbers, dates stay dates – independent of the regional settings).
 
 ## Features
 
@@ -10,6 +10,8 @@ It reformats T-SQL code cleanly and **preserves comments** (`--` and `/* */`).
   - `Format Selection`
   - `Format Whole Document`
   - `Formatting Settings…`
+  - `Export to Excel` *(new in 1.5)*
+- **Type-safe Excel export** of the grid results (see [Export to Excel](#export-to-excel))
 - Custom toolbar icons
 - Keyboard shortcuts
 - Comment-preserving, configurable formatting (indentation, keyword casing, etc.)
@@ -40,12 +42,53 @@ The toolbar "Poor Man's T-SQL Formatter" appears docked below the menu bar. It c
 | Format Selection | formats only the selected text |
 | Format Whole Document | formats the whole active script |
 | Formatting Settings… | opens the options (indentation, casing, …) |
+| Export to Excel | exports all grid results of the active query window to an `.xlsx` file and opens it |
 
 | Shortcut | Action |
 |---|---|
 | `Ctrl+Alt+F` | Format Selection |
 | `Ctrl+Alt+D` | Format Whole Document |
 | `Ctrl+Alt+K` | Formatting Settings |
+| `Ctrl+Alt+E` | Export to Excel ¹ |
+
+¹ Only assigned if `Ctrl+Alt+E` is not already used by another SSMS command (checked once on first load). Otherwise assign it yourself via **Tools > Options > Environment > Keyboard** (search the command list for `Excel`).
+
+## Export to Excel
+
+Copying grid results into Excel or saving them as CSV causes well-known problems: decimal point vs. comma (`1.5` becomes a date or text in a German Excel), dates arrive as text, leading zeros of article numbers are lost, long numbers turn into `1,23457E+18`.
+
+**Export to Excel** avoids all of this: it does not export the *displayed text*, but the *typed values* SSMS keeps internally, and writes them as real number/date/text cells into a native `.xlsx` file. Numbers and dates are stored culture-independently, so Excel displays them in the user's regional format (e.g. `1.234,56` and `31.12.2026` on German systems).
+
+- All result sets of the active query window are exported, one worksheet each (`Result 1`, `Result 2`, …). More than 1,048,575 rows are continued on additional sheets.
+- Header row bold, frozen, with AutoFilter; column widths fitted.
+- The query is **not** executed again – exactly what is in the grid is exported.
+- The file is written to `%TEMP%\SSMS-Excel-Export\SSMS_Export_<timestamp>.xlsx` and opened with the program registered for `.xlsx` (usually Excel). Use *Save As* in Excel to keep it.
+- Large exports run in the background with a progress dialog and can be cancelled.
+- No dependencies: no Excel interop, no Open XML SDK – Excel is only needed to *open* the file.
+
+| SQL Server type | Excel cell |
+|---|---|
+| `tinyint`, `smallint`, `int`, `bigint` (≤ 15 digits) | number, format `0` |
+| `decimal` / `numeric(p,s)` | number with *s* decimal places |
+| `money`, `smallmoney` | number, 2–4 decimal places |
+| `float`, `real` | number (exact round-trip, `real` without float artifacts such as `0.100000001`) |
+| `bit` | number `0` / `1` (as shown in the grid) |
+| `date` | date (short date format of the current culture) |
+| `datetime`, `datetime2`, `smalldatetime` | date + time (milliseconds when present) |
+| `time` | time |
+| `datetimeoffset` | text incl. offset (Excel has no time zones) |
+| `uniqueidentifier` | text (upper case, as in SSMS) |
+| `binary`, `varbinary`, `image`, `rowversion` | text `0x…` |
+| `char`, `varchar`, `nchar`, `nvarchar`, `xml`, … | text – never interpreted as number, date or formula (`00123`, `=…` stay as they are) |
+| `NULL` | empty cell |
+
+**No silent data loss** – the following cases are exported as text and reported after the export:
+
+- numbers with **more than 15 significant digits** (`bigint` IDs, `decimal(38,…)`): Excel only keeps 15 digits and would otherwise change the value,
+- dates **before 1900-03-01** (not representable in Excel),
+- texts longer than **32,767 characters** are truncated (Excel cell limit).
+
+Requires **Results to Grid** (`Ctrl+D`); with *Results to Text/File* there is nothing to export.
 
 ## Build from source
 

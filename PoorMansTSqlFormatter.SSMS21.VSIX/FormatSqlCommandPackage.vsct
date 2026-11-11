@@ -66,11 +66,11 @@
       <Group guid="guidFormatSqlCommandPackageCmdSet" id="FormatMenuHostGroup" priority="0x0500">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
       </Group>
-      <!-- Group fuer die 3 Buttons im Untermenue. -->
+      <!-- Group fuer die 4 Buttons im Untermenue. -->
       <Group guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="FormatSqlMenu"/>
       </Group>
-      <!-- Group fuer die 3 Icon-Buttons in der Toolbar. -->
+      <!-- Group fuer die 4 Icon-Buttons in der Toolbar. -->
       <Group guid="guidFormatSqlCommandPackageCmdSet" id="FormatToolbarGroup" priority="0x0000">
         <Parent guid="guidFormatSqlCommandPackageCmdSet" id="FormatToolbarMenu"/>
       </Group>
@@ -108,6 +108,14 @@
           <ButtonText>Formatting Settings…</ButtonText>
         </Strings>
       </Button>
+      <!-- Export der Ergebnisraster in eine typisierte .xlsx-Datei (siehe ExcelExportCommand). -->
+      <Button guid="guidFormatSqlCommandPackageCmdSet" id="ExportToExcelCommandId" priority="0x0103" type="Button">
+        <Parent guid="guidFormatSqlCommandPackageCmdSet" id="MyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPic4" />
+        <Strings>
+          <ButtonText>Export to Excel</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -117,11 +125,11 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\FormatSqlCommand.png" usedList="bmpPic1,bmpPic2,bmpPic3"/>
+      <Bitmap guid="guidImages" href="Resources\FormatSqlCommand.png" usedList="bmpPic1,bmpPic2,bmpPic3,bmpPic4"/>
     </Bitmaps>
   </Commands>
 
-  <!-- Die 3 Formatier-Buttons erscheinen zusaetzlich zur Menue-Placement in der Toolbar.
+  <!-- Die 4 Buttons erscheinen zusaetzlich zur Menue-Placement in der Toolbar.
        (Ein Button kann nur EIN Parent im <Parent>-Element haben; weitere Positionen
        werden ueber <CommandPlacement> gemerged.) -->
   <CommandPlacements>
@@ -134,11 +142,14 @@
     <CommandPlacement guid="guidFormatSqlCommandPackageCmdSet" id="FormattingSettingsCommandId" priority="0x0102">
       <Parent guid="guidFormatSqlCommandPackageCmdSet" id="FormatToolbarGroup"/>
     </CommandPlacement>
+    <CommandPlacement guid="guidFormatSqlCommandPackageCmdSet" id="ExportToExcelCommandId" priority="0x0103">
+      <Parent guid="guidFormatSqlCommandPackageCmdSet" id="FormatToolbarGroup"/>
+    </CommandPlacement>
   </CommandPlacements>
 
   <!-- Tastenkombinationen werden NICHT hier im vsct deklariert: SSMS 22 mergt Extension-
        KeyBindings nur in das VS-"Default"-Schema, nicht in das aktive Schema ("(Standard)").
-       Die Shortcuts (Strg+Alt+F / Strg+Alt+D / Strg+Alt+K) setzt das Package beim Laden
+       Die Shortcuts (Strg+Alt+F / Strg+Alt+D / Strg+Alt+K / Strg+Alt+E) setzt das Package beim Laden
        programmatisch via DTE (siehe FormatSqlCommand.EnsureKeyBindings). -->
 
   <Symbols>
@@ -155,12 +166,14 @@
       <IDSymbol name="FormatSqlCommandId" value="0x0100" />
       <IDSymbol name="FormatWholeDocumentCommandId" value="0x0101" />
       <IDSymbol name="FormattingSettingsCommandId" value="0x0102" />
+      <IDSymbol name="ExportToExcelCommandId" value="0x0103" />
     </GuidSymbol>
 
     <GuidSymbol name="guidImages" value="{52baaad8-2d64-4ce1-9c14-bac7a72f0fbd}" >
       <IDSymbol name="bmpPic1" value="1" />
       <IDSymbol name="bmpPic2" value="2" />
       <IDSymbol name="bmpPic3" value="3" />
+      <IDSymbol name="bmpPic4" value="4" />
     </GuidSymbol>
 
     <!-- Alias fuer den Shell-Well der oberen Toolbar-Zeile (guidSHLMainMenu). Der Name

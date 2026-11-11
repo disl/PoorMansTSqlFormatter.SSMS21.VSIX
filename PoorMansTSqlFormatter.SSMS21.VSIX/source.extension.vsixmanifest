@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
 	<Metadata>
-		<Identity Id="PoorMansTSqlFormatter.SSMS21.VSIX.93aae78f-16c6-49f1-92ff-d53a474d56b9" Version="1.4" Language="en-US" Publisher="Dimitri Sluzki" />
+		<Identity Id="PoorMansTSqlFormatter.SSMS21.VSIX.93aae78f-16c6-49f1-92ff-d53a474d56b9" Version="1.5" Language="en-US" Publisher="Dimitri Sluzki" />
 		<DisplayName>Poor Man's T-SQL Formatter for SSMS 22</DisplayName>
-		<Description xml:space="preserve">T-SQL formatter for SSMS 22 (VS 2026 shell) with docked toolbar and keyboard shortcuts. Comment-preserving.</Description>
+		<Description xml:space="preserve">T-SQL formatter for SSMS 22 (VS 2026 shell) with docked toolbar and keyboard shortcuts. Comment-preserving. Type-safe export of grid results to Excel (.xlsx).</Description>
 	</Metadata>
 	<Installation>
 		<InstallationTarget Id="Microsoft.VisualStudio.Ssms" Version="[22.0, )">

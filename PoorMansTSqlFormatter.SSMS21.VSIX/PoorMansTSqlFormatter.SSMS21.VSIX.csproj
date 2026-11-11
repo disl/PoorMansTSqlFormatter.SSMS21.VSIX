@@ -52,12 +52,16 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ExcelExportCommand.cs" />
+    <Compile Include="ExcelExporter.cs" />
     <Compile Include="FormatSqlCommand.cs" />
     <Compile Include="FormatSqlCommandPackage.cs" />
     <Compile Include="FormattingSettings.cs" />
     <Compile Include="FormattingSettingsForm.cs" />
     <Compile Include="Localizer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResultGridReader.cs" />
+    <Compile Include="XlsxWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -71,6 +75,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>

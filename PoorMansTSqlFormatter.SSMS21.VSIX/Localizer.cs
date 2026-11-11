@@ -28,7 +28,69 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
                 { "Format Selection", "Auswahl formatieren" },
                 { "Format Whole Document", "Ganzes Dokument formatieren" },
                 { "Formatting Settings…", "Formatierungseinstellungen…" },
+                { "Export to Excel", "Export in Excel" },
             };
+
+        // --- Excel-Export ---
+
+        public static string ExcelNoResultsMessage =>
+            T(
+                "Im aktiven Abfragefenster gibt es keine Ergebnisse im Raster.\r\n\r\n" +
+                "Bitte die Abfrage mit „Ergebnisse in Raster“ (Strg+D) ausführen und dann erneut exportieren.",
+                "The active query window has no grid results.\r\n\r\n" +
+                "Run the query with \"Results to Grid\" (Ctrl+D) and export again.");
+
+        public static string ExcelReadFailedPrefix =>
+            T("Die Ergebnisse konnten nicht gelesen werden: ", "Could not read the results: ");
+
+        public static string ExcelExportFailedPrefix =>
+            T("Export in Excel fehlgeschlagen: ", "Export to Excel failed: ");
+
+        public static string ExcelWaitTitle =>
+            T("Export in Excel", "Export to Excel");
+
+        public static string ExcelWaitMessage =>
+            T("Ergebnisse werden nach Excel exportiert …", "Exporting results to Excel …");
+
+        public static string ExcelProgressText(long done, long total) =>
+            T(string.Format(CultureInfo.CurrentCulture, "{0:N0} von {1:N0} Zeilen", done, total),
+              string.Format(CultureInfo.CurrentCulture, "{0:N0} of {1:N0} rows", done, total));
+
+        public static string ExcelOpenFailedMessage(string path) =>
+            T("Die Datei wurde erstellt, konnte aber nicht geöffnet werden (kein Programm für .xlsx registriert?):\r\n\r\n" + path,
+              "The file was created but could not be opened (no program registered for .xlsx?):\r\n\r\n" + path);
+
+        /// <summary>Hinweise nach dem Export; null, wenn es nichts zu melden gibt.</summary>
+        public static string ExcelNotes(ExcelExportStats s)
+        {
+            var lines = new List<string>();
+            if (s.IncompleteResultSets > 0)
+                lines.Add(T("• Die Abfrage lief noch – exportiert wurden nur die bis dahin geladenen Zeilen.",
+                            "• The query was still running – only the rows loaded so far were exported."));
+            if (s.PreciseNumbersAsText > 0)
+                lines.Add(T(string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} Zahl(en) mit mehr als 15 Stellen wurden als Text exportiert, damit keine Stellen verloren gehen (Excel rechnet nur mit 15 Stellen).",
+                                s.PreciseNumbersAsText),
+                            string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} number(s) with more than 15 digits were exported as text so that no digits are lost (Excel only keeps 15 digits).",
+                                s.PreciseNumbersAsText)));
+            if (s.OldDatesAsText > 0)
+                lines.Add(T(string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} Datumswert(e) vor dem 01.03.1900 wurden als Text exportiert (in Excel nicht darstellbar).",
+                                s.OldDatesAsText),
+                            string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} date value(s) before 1900-03-01 were exported as text (not representable in Excel).",
+                                s.OldDatesAsText)));
+            if (s.TruncatedTexts > 0)
+                lines.Add(T(string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} Text(e) wurden auf 32.767 Zeichen gekürzt (Excel-Grenze je Zelle).",
+                                s.TruncatedTexts),
+                            string.Format(CultureInfo.CurrentCulture,
+                                "• {0:N0} text value(s) were truncated to 32,767 characters (Excel cell limit).",
+                                s.TruncatedTexts)));
+            if (lines.Count == 0) return null;
+            return T("Export abgeschlossen. Hinweise:", "Export finished. Notes:") + "\r\n\r\n" + string.Join("\r\n", lines);
+        }
 
         // --- MessageBox-Texte ---
 

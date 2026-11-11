@@ -28,6 +28,9 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         /// <summary>Command-ID „Formatierungseinstellungen…" (matches „FormattingSettingsCommandId").</summary>
         public const int FormattingSettingsCommandId = 0x0102;
 
+        /// <summary>Command-ID „Export in Excel" (matches „ExportToExcelCommandId").</summary>
+        public const int ExportToExcelCommandId = 0x0103;
+
         /// <summary>Command-Set-GUID (matches „guidFormatSqlCommandPackageCmdSet" im .vsct).</summary>
         public static readonly Guid CommandSet = new Guid("3f53685b-f1e9-45b3-bc46-8bb825ab60a2");
 
@@ -41,6 +44,7 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
             AddCommand(commandService, FormatSelectionCommandId, this.ExecuteFormatSelection, this.QueryStatusWritableDocument);
             AddCommand(commandService, FormatWholeDocumentCommandId, this.ExecuteFormatWholeDocument, this.QueryStatusWritableDocument);
             AddCommand(commandService, FormattingSettingsCommandId, this.ExecuteSettings, this.QueryStatusLocalizeOnly);
+            AddCommand(commandService, ExportToExcelCommandId, this.ExecuteExportToExcel, this.QueryStatusAnyDocument);
         }
 
         /// <summary>
@@ -89,11 +93,80 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
                     cmd.Bindings = new object[] { entry.Combo };
                     Log("Tastenkombination gesetzt: " + entry.Combo);
                 }
+
+                EnsureExcelKeyBinding(dte);
             }
             catch (Exception ex)
             {
                 Log("EnsureKeyBindings Fehler: " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Strg+Alt+E für „Export in Excel". Anders als bei den drei Formatier-Kombos ist hier
+        /// nicht vorab gegen die SSMS-Belegung geprüft – deshalb wird nur gesetzt, wenn kein
+        /// anderes Kommando die Kombination bereits nutzt. Die (teure) Prüfung läuft einmalig;
+        /// danach verhindert eine Markierungsdatei weitere Versuche.
+        /// </summary>
+        private static void EnsureExcelKeyBinding(DTE2 dte)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            const string combo = "Global::Ctrl+Alt+E";
+            string marker = Path.Combine(Path.GetDirectoryName(FormattingSettings.ConfigFilePath), "excel-shortcut-checked.txt");
+            if (File.Exists(marker)) return;
+
+            var cmd = FindCommand(dte, ExportToExcelCommandId);
+            if (cmd == null) return; // Kommando noch nicht registriert -> naechster Start
+            if (!HasEffectiveBinding(cmd))
+            {
+                string usedBy = FindCommandUsingKeys(dte, "Ctrl+Alt+E");
+                if (usedBy == null)
+                {
+                    cmd.Bindings = new object[] { combo };
+                    Log("Tastenkombination gesetzt: " + combo);
+                }
+                else
+                {
+                    Log("Strg+Alt+E nicht gesetzt, bereits belegt durch: " + usedBy);
+                }
+            }
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(marker));
+                File.WriteAllText(marker, DateTime.Now.ToString("s"));
+            }
+            catch
+            {
+                // Dann wird beim naechsten Start erneut geprueft.
+            }
+        }
+
+        /// <summary>Name des ersten Kommandos, das die Tastenkombination (in beliebigem Bereich) nutzt.</summary>
+        private static string FindCommandUsingKeys(DTE2 dte, string keys)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            foreach (Command c in dte.Commands)
+            {
+                try
+                {
+                    if (!(c.Bindings is object[] bindings)) continue;
+                    foreach (object b in bindings)
+                    {
+                        string s = b as string;
+                        if (s == null) continue;
+                        int idx = s.IndexOf("::", StringComparison.Ordinal);
+                        string key = idx >= 0 ? s.Substring(idx + 2) : s;
+                        if (string.Equals(key.Trim(), keys, StringComparison.OrdinalIgnoreCase))
+                            return string.IsNullOrEmpty(c.Name) ? c.Guid + ":" + c.ID : c.Name;
+                    }
+                }
+                catch
+                {
+                    // Einzelne Kommandos ohne lesbare Bindings ueberspringen.
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -170,6 +243,28 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
                 var dte = (DTE2)Package.GetGlobalService(typeof(DTE));
                 command.Enabled = dte?.ActiveDocument != null && !dte.ActiveDocument.ReadOnly;
             }
+        }
+
+        /// <summary>
+        /// „Export in Excel": aktiv, sobald ein Dokument offen ist. Ob es Raster-Ergebnisse gibt,
+        /// wird erst beim Klick geprueft (Hinweis-Dialog), damit QueryStatus billig bleibt.
+        /// </summary>
+        private void QueryStatusAnyDocument(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            ApplyLocalizedCaptions();
+            if (sender is OleMenuCommand command)
+            {
+                var dte = (DTE2)Package.GetGlobalService(typeof(DTE));
+                command.Enabled = dte?.ActiveDocument != null;
+            }
+        }
+
+        /// <summary>Exportiert die Ergebnisraster des aktiven Abfragefensters nach Excel.</summary>
+        private void ExecuteExportToExcel(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            ExcelExportCommand.Execute();
         }
 
         /// <summary>
@@ -422,7 +517,7 @@ namespace PoorMansTSqlFormatter.SSMS21.VSIX
         /// Hängt eine kurze Diagnose-Zeile an die Logdatei (UTF-8) an. Fehler beim Schreiben
         /// werden geschluckt, damit das Logging nie den Format-Vorgang stört.
         /// </summary>
-        private static void Log(string message)
+        internal static void Log(string message)
         {
             try
             {
