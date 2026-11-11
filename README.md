@@ -18,6 +18,8 @@ It reformats T-SQL code cleanly and **preserves comments** (`--` and `/* */`), a
 - **Localized UI** — German texts on German systems (`de-DE`, `de-AT`, `de-CH`, …), English everywhere else (toolbar/menu captions, message boxes, settings dialog)
 - Per-user install — no admin rights required
 
+> **SSMS 22.12 users:** version 1.4 crashes SSMS a few seconds after formatting (stack overflow caused by a self-referencing menu in SSMS 22.12). **Please update to 1.5.**
+
 ## System requirements
 
 - SQL Server Management Studio 22 (SSMS 22)
@@ -116,6 +118,15 @@ The resulting `PoorMansTSqlFormatter.SSMS21.VSIX.vsix` is in `PoorMansTSqlFormat
   ```
   "%ProgramFiles%\Microsoft SQL Server Management Studio 22\Release\Common7\IDE\VSIXInstaller.exe" /q /u:PoorMansTSqlFormatter.SSMS21.VSIX.93aae78f-16c6-49f1-92ff-d53a474d56b9
   ```
+
+## Changelog
+
+### 1.5
+- **New:** `Export to Excel` button – type-safe export of all grid results to `.xlsx` (see [Export to Excel](#export-to-excel)).
+- **Fix:** SSMS 22.12 crashed a few seconds after formatting (stack overflow `0xC00000FD`). The German caption localization walked all SSMS menus recursively; SSMS 22.12 contains a self-referencing menu (*Build > Build*), which caused endless recursion. Captions are now set directly on the commands.
+
+### 1.4
+- Docked toolbar, custom icons, keyboard shortcuts, localized UI (German/English).
 
 ## License
 
